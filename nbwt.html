@@ -1,0 +1,103 @@
+<html>
+    <head>
+        <title>NetBeans Web Toolkit</title>
+    </head>
+    <body>
+
+<h1>NetBeans Web Toolkit</h1>
+
+<p><i>2018/08/25</i>
+
+<p>
+According to the documentation the <a href='https://builds.apache.org/job/incubator-netbeans-html4j-linux/javadoc/overview-summary.html'>HTML/Java API</a> is "an alternative to Swing and JavaFX for creating applications with a graphical user interface."
+
+<p>
+I'm going to first start by rebranding it to the NetBeans Web Toolkit (NBWT). People might have heard about Google Web Toolkit and I think it's a better parallel.
+
+<p>
+What's the NetBeans Web Toolkit good for? To write cross-platform web-like apps in a mix of Java for the 'backend' and plain-old HTML / CSS for the UI. And there's a Java-Javascript bridge to help you.
+
+<p>
+The HTML UI will generally be in a browser, but what's interesting for existing Java desktop apps (NetBeans Platform-based or not) is that the UI here could be a JavaFX embedded web view. This creates a migration path from the desktop to the browser while keeping existing code intact.
+
+<p>
+Here is the simplest demo app I could come up with: something that shows you the date.
+
+<p>
+The full source code is at <a href='https://github.com/emilianbold/nbwt-clock-demo'>https://github.com/emilianbold/nbwt-clock-demo</a>
+
+<p>
+The HTML is very basic. You show the clock and you use Knockout bindings to make sure the clock gets updated:
+
+<pre>
+&lt;div data-bind="text: clock"&gt;Is this thing on?&lt;/div&gt;
+</pre>
+
+Next, with a @Model annotation I auto-generate a model for my clock, I instantiate it, bind it and start a timer to update the clock.
+
+<pre>
+import net.java.html.json.Model;
+import net.java.html.json.Property;
+
+@Model(targetId = "", className = "ClockModel", properties = {
+    @Property(name = "clock", type = String.class)
+})
+public class Clock {
+
+    public static void setUp() {
+        ClockModel model = new ClockModel();
+        model.setClock("Please wait...");
+        model.applyBindings();
+        
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                model.setClock(new Date().toString());
+            }
+        }, 0, 1000);
+    }
+}
+</pre>
+
+and finally I just load the HTML and bootstrap my Java class with a simple call:
+
+<pre>
+FXBrowsers.load(browser, Main.class.getResource("index.html"), Clock.class, "setUp");
+</pre>
+
+Of course, to create the window there is some more scaffolding but that's the gist of it.
+
+You just need 3 Maven dependencies:
+
+<ul>
+<li>org.netbeans.html:net.java.html.boot.fx
+<li>org.netbeans.html:net.java.html.json and
+<li>org.netbeans.html:ko4j
+</ul>
+
+And you have to remember to call the code generator:
+
+<pre>
+&lt;build&gt;
+        &lt;plugins&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.netbeans.html&lt;/groupId&gt;
+                &lt;artifactId&gt;html4j-maven-plugin&lt;/artifactId&gt;
+                &lt;lt;lt;version&gt;1.5.1&lt;lt;lt;/version&gt;
+                &lt;executions&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;generator&lt;/id&gt;
+                        &lt;goals&gt;
+                            &lt;goal&gt;process-js-annotations&lt;/goal&gt;
+                        &lt;/goals&gt;
+                    &lt;/execution&gt;
+                &lt;/executions&gt;            
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+...
+&lt;/build&gt;
+</pre>
+
+    </body>
+</html>
