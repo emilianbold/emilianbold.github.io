@@ -1,0 +1,76 @@
+<html>
+    <head>
+        <title>NetBeans Web Toolkit - World Clock - Actions</title>
+    </head>
+    <body>
+    <h1>NetBeans Web Toolkit - World Clock - Actions</h1>
+    <p><i>2018/08/26</i>
+
+    <p>In the <a href='nbwt.html'>previous</a> article I started exploring the NetBeans Web Toolkit and I
+    made a simple clock display.
+
+    <p>Let's allow the user to change the city / timezone!
+
+    <p>
+    <img width='220px' height='188px' src="timezone-clock@2x.png" alt="App with timezone screenshot" />
+
+    <p>
+    So first, we need to add a <i>city</i> property to our model:
+
+    <pre>
+    @Model(targetId = "", className = "ClockModel", properties = {
+      @Property(name = "clock", type = String.class)
+      ,
+      @Property(name = "city", type = String.class)
+    })
+    </pre>
+
+    <p>
+    Then we need some radio buttons which are bound to this property:
+
+    <pre>
+    &lt;input type="radio" name="cityGroup" value="Europe/London" data-bind="checked: city"&gt;London
+    &lt;input type="radio" name="cityGroup" value="Europe/Paris" data-bind="checked: city"/&gt;Paris
+    &lt;input type="radio" name="cityGroup" value="Asia/Tokyo" data-bind="checked: city"/&gt;Tokyo
+    </pre>
+
+    <p>
+    The radio button <i>value</i> will be set to the <i>city</i> property.
+
+    <p>
+    Next, we just need to take into account the current city while setting the date:
+
+    <pre>
+    private static void updateClock(ClockModel model) {
+        Instant instant = Instant.now();
+        ZoneId zoneId = ZoneId.of(model.getCity());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(instant, zoneId);
+
+        model.setClock(DateTimeFormatter.ofPattern("dd/MM/yyyy - hh:mm:ss").format(zdt));
+    }
+    </pre>
+
+    <p>
+    Next, I want to also add a button that shows the current date/time:
+
+    <pre>
+    &lt;button data-bind="click: $root.currentLocale"&gt;Current time&lt;/button&gt;
+    </pre>
+   
+    <p>
+    This will call <i>currentLocale</i> on our Clock class, which has to be static:
+
+    <pre>
+    @Function
+    static void currentLocale(ClockModel model) {
+        model.setCity(ZoneId.systemDefault().getId());
+    }
+    </pre>
+
+    <p>
+    Note the @Function annotation and the fact that the 1st argument is our current model (there's no other way to get it otherwise).
+
+    <p>
+    The final version is at <a href='https://github.com/emilianbold/nbwt-clock-demo'>https://github.com/emilianbold/nbwt-clock-demo</a>
+    
+</html>
