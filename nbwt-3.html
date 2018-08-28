@@ -1,0 +1,134 @@
+<html>
+    <head>
+        <title>NetBeans Web Toolkit - World Clock - External chart libraries</title>
+    </head>
+    <body>
+        <h1>NetBeans Web Toolkit - World Clock - External chart libraries</h1>
+
+        <p><i>2018/08/28</i>
+
+        <p>
+            In the <a href='nbwt-2.html'>previous</a> article we added a time zone selection on our clock.
+            Now, let's show those cities on a map! In order to do this I'm going to use the popular <a href='http://plot.ly'>plot.ly</a> library.
+        </p>
+
+
+        <p>
+            <img src='clock-map@2x.png' alt='World map screenshot' width='731' height='474'/>
+        </p>
+        <p>
+            On the HTML side we need a div where the chart will be injected and a button to click:
+        </p>
+        <pre>
+        &lt;button data-bind="click: $root.showPlot"&gt;Show cities map&lt;/button&gt;
+        &lt;div id="plot"&gt;&lt;/div&gt;
+        </pre>
+
+        <p>
+            Next, we need to include the plot.ly Javascript file. We use the @JavaScriptResource annotation:
+        </p>
+        <pre>
+        @JavaScriptResource("plotly-latest.min.js")
+        public class Clock {
+        ...
+        </pre>
+
+        <p>
+            Note that plotly-latest.min.js is a resource added in our Java package.
+        </p>
+
+        <p>
+            The HTML button calls <i>showPlot</i> which is a new method in our Clock class:
+        </p>
+        <pre>
+        @Function
+        static void showPlot(ClockModel model) {
+             newPlot("plot", createGeoData(new String[]{"London", "Paris", "Tokyo"},
+                     new double[]{51.5074, 48.8566, 35.6895},
+                     new double[]{-0.1278, 2.3522, 139.6917},
+                     new String[]{"top right", "bottom right", "top center"}),
+                     createGeoLayout());
+       }
+        </pre>
+
+        <p>
+            Note the @Function annotation. This method calls <i>newPlot</i>, <i>createGeoData</i> (which receives the list of cities and coordinates) and <i>createGeoLayout</i>.
+        </p>
+
+        <p>
+            newPlot is quite simple:
+        </p>
+
+        <pre>
+        @JavaScriptBody(args = {"divName", "data", "layout"}, body = "Plotly.newPlot(divName, data, layout, {displayModeBar: false})")
+        public static native void newPlot(String divName, Object data, Object layout);
+        </pre>
+
+        <p>
+            It just calls <i>from Javascript</i> the <i>Plotly.newPlot</i> method with the given arguments.
+            Since this is something executed from the Javascript side, it is a <i>native</i> method and has a @JavaScriptBody.
+        </p>
+
+        <p>
+            How interesting to use the <i>native</i> modifier for this!
+        </p>
+
+        <p>
+            <i>createGeoData</i> creates the plot.ly configuration object based on the given arguments and it's again <i>native</i>:
+        </p>
+
+        <pre>
+        @JavaScriptBody(args = {"cities", "lat", "lon", "textPosition"}, body = "return [{\n" +
+    "        type: 'scattergeo',\n" +
+    "        mode: 'markers+text',\n" +
+    "        text: cities,\n" +
+    "        lon: lon,\n" +
+    "        lat: lat,\n" +
+    "        marker: {\n" +
+    "            size: 10,\n" +
+    "            line: {\n" +
+    "                width: 1\n" +
+    "            }\n" +
+    "        },\n" +
+    "        name: 'Clock cities',\n" +
+    "        textposition: textPosition,\n" +
+    "    }]")
+        public static native Object createGeoData(String[] cities, double[] lat, double [] lon, String[] textPosition);
+        </pre>
+
+        <p>
+            <i>createGeoLayout</i> is the least interesting as it just creates a static object with the chart properties:
+        </p>
+
+        <pre>
+        @JavaScriptBody(args = {}, body = "return {\n" +
+    "        autosize: false,\n" +
+    "        height: 220,\n" +
+    "        margin: {\n" +
+    "            l: 0,\n" +
+    "            r: 0,\n" +
+    "            t: 0,\n" +
+    "            b: 0,\n" +
+    "            pad: 0\n" +
+    "        },\n" +
+    "        geo: {\n" +
+    "            scope: 'world',\n" +
+    "            resolution: 50,\n" +
+    "            lonaxis: {\n" +
+    "                'range': [-10, 160]\n" +
+    "            },\n" +
+    "            lataxis: {\n" +
+    "                'range': [20, 70]\n" +
+    "            },\n" +
+    "            showland: true,\n" +
+    "            landcolor: '#EAEAAE'\n" +
+    "        }\n" +
+    "    }")
+        public static native Object createGeoLayout();
+        </pre>
+
+        <p>
+            That's it! As usual the full project is available at <a href='https://github.com/emilianbold/nbwt-clock-demo'>https://github.com/emilianbold/nbwt-clock-demo</a>
+        </p>
+    </body>
+</html>
